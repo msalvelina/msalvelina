@@ -7,11 +7,11 @@ if [[ ! -f "data/gencode.v41.basic.annotation.gff3.gz" ]]; then # Проверя
     exit 1 # совершаем выход из программы при ошибке
 fi
 
-mkdir terminal_task/results
+mkdir -p terminal_task/results
 
 zcat "data/gencode.v41.basic.annotation.gff3.gz" | \ # отображаем содержимое сжатого файла
 awk -F'\t' '$3 == "gene"' | \ # отфильтровываем строки, в третьем столбце которых 'gene'
-awk -F'\t' '$9 ~ "gene_type=unprossed_pseudogene"' | \ # отфильтровываем строки, в подстроках которых встречается "gene_type=unprossed_pseudogene"
+awk -F'\t' '$9 ~ "gene_type=unprocessed_pseudogene"' | \ # отфильтровываем строки, в подстроках которых встречается "gene_type=unprossed_pseudogene"
 awk -F'\t' 'BEGIN {OFS="\t"} { # пишем блок фильтрации, начинаем с указания разделителей на вход и выход
     split($9, attributes, ";") # делим девятый столбец по ; и сохраняем результаты в массив "attributes"
     gene_name = "" # задаем пустое значение переменной gene_code
