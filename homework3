@@ -1,0 +1,35 @@
+#!/bin/bash
+
+echo "Обрабатываю GFF файл..."
+
+if [[ ! -f "data/gencode.v41.basic.annotation.gff3.gz" ]]; then # Проверяем наличие файла
+    echo "Ошибка: GFF файл не найден!" # сообщаем об ошибке, если его нет
+    exit 1 # совершаем выход из программы при ошибке
+fi
+
+mkdir terminal_task/results
+
+zcat "data/gencode.v41.basic.annotation.gff3.gz" | \ # отображаем содержимое сжатого файла
+awk -F'\t' '$3 == "gene"' | \ # отфильтровываем строки, в третьем столбце которых 'gene'
+awk -F'\t' '$9 ~ "gene_type=unprossed_pseudogene"' | \ # отфильтровываем строки, в подстроках которых встречается "gene_type=unprossed_pseudogene"
+awk -F'\t' 'BEGIN {OFS="\t"} { # пишем блок фильтрации, начинаем с указания разделителей на вход и выход
+    split($9, attributes, ";") # делим девятый столбец по ; и сохраняем результаты в массив "attributes"
+    gene_name = "" # задаем пустое значение переменной gene_code
+    for (i in attributes) { # для каждого значения из массива выполнить следующее
+        if (attributes[i] ~ /gene_name=/) { # если значение из массива содержит "gene_code", то выполнить следующее
+            split(attributes[i], parts, "=") # делим значение на части по = (в местах, где =)
+            gene_name = parts[2] # вторая часть - новое значение переменной
+            break # выход из цикла
+        }
+    }
+    start = $4 
+    end = $5
+    if ($7 == "+") {
+        end = start + 1
+        print $1, start, end, $7, gene_name
+    } else if ($7 == "-") {
+        start = end
+        end = end + 1
+        print $1, start, end, $7, gene_name
+}' > "results/unprocessed_pseudogenes.tsv" # сохраняем результат 
+echo "Готово! Результат в terminal_task/results/unprocessed_pseudogenes.tsv"
